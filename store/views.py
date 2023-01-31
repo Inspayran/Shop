@@ -7,7 +7,7 @@ from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import Q
 from .forms import ReviewForm
 from django.contrib import messages
-from .models import ReviewRating
+from .models import ReviewRating, ProductGallery
 from orders.models import OrderProduct
 
 
@@ -52,11 +52,13 @@ def product_detail(request, category_slug, product_slug):
         order_product = None
 
     reviews = ReviewRating.objects.filter(product_id=single_product, status=True)
+    product_gallery = ProductGallery.objects.filter(product_id=single_product.id)
     context = {
         'single_product': single_product,
         'in_cart': in_cart,
         'order_product': order_product,
         'reviews': reviews,
+        'product_gallery': product_gallery,
     }
     return render(request, 'store/product_detail.html', context)
 
@@ -99,3 +101,12 @@ def submit_review(request, product_id):
                 data.save()
                 messages.success(request, 'Thank you! Your review has been created!')
                 return redirect(url)
+
+
+def price_range(request):
+    if request.method == 'POST':
+        min_price = request.POST[min_price]
+        max_price = request.POST[max_price]
+        products = Product.objects.all(is_available=True)
+        for product in products:
+            min_price = product.price >= request.POST[min_price]
